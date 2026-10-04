@@ -1,14 +1,33 @@
+# test_model.py
 from model.buku_model import BukuModel
+from model.anggota_model import AnggotaModel
 
-model = BukuModel()
+def test_buku():
+    print("--- TESTING BUKU MODEL ---")
+    buku = BukuModel()
+    
+    # Asumsi ID 1 dan 2 sudah ada di database dari proses Create sebelumnya
+    # Test Update
+    buku.update_buku(1, "Rekayasa Perangkat Lunak Lanjut", "Ian Sommerville", 2021)
+    
+    # Test Delete
+    buku.delete_buku(2)
 
-# 1. Menguji fungsi Create (menambah buku baru)
-print("Menambahkan data buku...")
-model.create_buku("Pemrograman Python MVC", "Guido van Rossum", 2023)
-print("Data berhasil disimpan ke Laragon MySQL!")
+def test_anggota():
+    print("\n--- TESTING ANGGOTA MODEL ---")
+    anggota = AnggotaModel()
+    
+    # Test Create Anggota
+    print("Menambahkan anggota baru...")
+    anggota.create_anggota("Budi Santoso", "Jl. Merdeka No. 45")
+    anggota.create_anggota("Siti Aminah", "Jl. Mawar No. 12")
+    
+    # Test Read Anggota
+    print("\nDaftar Anggota:")
+    daftar = anggota.read_anggota()
+    for row in daftar:
+        print(f"ID: {row[0]}, Nama: {row[1]}, Alamat: {row[2]}")
 
-# 2. Menguji fungsi Read (menampilkan data)
-print("\n=== Daftar Buku ===")
-daftar_buku = model.get_all_buku()
-for buku in daftar_buku:
-    print(f"[{buku['id_buku']}] {buku['judul']} - {buku['penulis']} ({buku['tahun_terbit']})")
+if __name__ == "__main__":
+    test_buku()
+    test_anggota()
