@@ -60,3 +60,17 @@ class BukuModel:
             finally:
                 cursor.close()
         return False
+
+    def read_buku(self):
+        if self.conn:
+            cursor = self.conn.cursor()
+            query = f"SELECT * FROM {self.table_name}"
+            try:
+                cursor.execute(query)
+                return cursor.fetchall()
+            except Exception as e:
+                print(f"Gagal mengambil data buku: {e}")
+                return []
+            finally:
+                cursor.close()
+        return []
