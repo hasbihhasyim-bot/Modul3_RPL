@@ -53,7 +53,8 @@ if __name__ == "__main__":
     elif args.gui == "buku":
         from controller.buku_controller import BukuController
 
-        BukuController().run()
+        # Jalan pintas uji coba tanpa login (mode admin). Aplikasi sebenarnya: python main.py
+        BukuController(user_role="admin").run()
     else:
         test_buku()
         test_anggota()

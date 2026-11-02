@@ -7,7 +7,7 @@ class BukuView(ctk.CTk):
     """Tampilan (View) data buku.
 
     Kelas ini hanya mengurus tampilan: form, tombol, dan tabel.
-    Logika tombol (simpan, perbarui, hapus, bersihkan) dan pemanggilan
+    Logika tombol (simpan, perbarui, hapus, bersihkan, logout) dan pemanggilan
     BukuModel ada di controller/buku_controller.py (BukuController).
     """
 
@@ -17,7 +17,7 @@ class BukuView(ctk.CTk):
         self._data_baris = {}
 
         self.title("Sistem Manajemen Perpustakaan")
-        self.geometry("800x450")
+        self.geometry("800x500")
 
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=2)
@@ -65,6 +65,15 @@ class BukuView(ctk.CTk):
             text="Bersihkan Form",
         )
         self.btn_bersihkan.pack(pady=5, padx=15, fill="x")
+
+        # Tombol Logout: menutup jendela ini dan kembali ke LoginView (diatur oleh controller)
+        self.btn_logout = ctk.CTkButton(
+            self.frame_kiri,
+            text="Logout",
+            fg_color="gray40",
+            hover_color="gray30",
+        )
+        self.btn_logout.pack(pady=(20, 10), padx=15, fill="x")
 
         # Frame Kanan (Tabel)
         self.frame_kanan = ctk.CTkFrame(self)

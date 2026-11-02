@@ -5,6 +5,9 @@ from views.buku_view import BukuView
 TAHUN_MIN = 1901
 TAHUN_MAX = 2155
 
+# Role yang boleh menambah, memperbarui, dan menghapus data buku.
+ROLE_ADMIN = "admin"
+
 
 def _teks(nilai):
     """Nilai NULL dari database ditampilkan sebagai teks kosong, bukan 'None'."""
@@ -16,18 +19,33 @@ class BukuController:
 
     Controller memasang perintah pada tombol di View, membaca baris yang
     dipilih pengguna pada tabel, lalu meneruskan datanya ke BukuModel.
+
+    `user_role` ("admin" atau "anggota") menentukan hak akses: selain admin,
+    form dan tombol simpan/perbarui/hapus dikunci (hanya boleh melihat).
     """
 
-    def __init__(self, model=None, view=None):
+    def __init__(self, model=None, view=None, user_role="anggota"):
+        self.user_role = user_role
+        self.logout_diminta = False
+
         self.model = model if model is not None else BukuModel()
         self.view = view if view is not None else BukuView()
 
+        # Menampilkan informasi role pada judul jendela aplikasi
+        self.view.title(f"Sistem Manajemen Perpustakaan - Mode: {self.user_role.upper()}")
+
         self._ikat_event()
+        self._terapkan_otorisasi()
         self.muat_buku()
 
     def run(self):
-        """Tampilkan jendela aplikasi."""
+        """Tampilkan jendela aplikasi.
+
+        Mengembalikan True jika jendela ditutup lewat tombol Logout, dan False
+        jika ditutup dengan cara lain (misalnya tombol X pada jendela).
+        """
         self.view.mainloop()
+        return self.logout_diminta
 
     # ------------------------------------------------------------------
     # Mengikat form, tombol, dan tabel ke fungsi controller
@@ -37,7 +55,38 @@ class BukuController:
         self.view.btn_perbarui.configure(command=self.perbarui_buku)
         self.view.btn_hapus.configure(command=self.hapus_buku)
         self.view.btn_bersihkan.configure(command=self.view.bersihkan_form)
+        self.view.btn_logout.configure(command=self.logout)
         self.view.tabel.bind("<<TreeviewSelect>>", self.pilih_buku)
+
+    # ------------------------------------------------------------------
+    # Otorisasi (Role-Based Access Control)
+    # ------------------------------------------------------------------
+    def _terapkan_otorisasi(self):
+        """OTORISASI: jika bukan admin, nonaktifkan form input dan semua tombol manipulasi data."""
+        if self.user_role == ROLE_ADMIN:
+            return
+
+        self.view.btn_simpan.configure(state="disabled", text="Akses Terkunci (Khusus Admin)")
+        self.view.btn_perbarui.configure(state="disabled")
+        self.view.btn_hapus.configure(state="disabled")
+        self.view.entry_judul.configure(state="disabled")
+        self.view.entry_penulis.configure(state="disabled")
+        self.view.entry_tahun.configure(state="disabled")
+
+    def _izinkan_admin(self, aksi):
+        """Proteksi ganda di level Controller: tolak aksi jika pengguna bukan admin."""
+        if self.user_role != ROLE_ADMIN:
+            self.view.tampilkan_error("Akses Ditolak", f"Anda tidak memiliki izin untuk {aksi} data!")
+            return False
+        return True
+
+    # ------------------------------------------------------------------
+    # Logout
+    # ------------------------------------------------------------------
+    def logout(self):
+        """Tombol 'Logout': tutup jendela perpustakaan. AuthController lalu menampilkan LoginView lagi."""
+        self.logout_diminta = True
+        self.view.destroy()
 
     # ------------------------------------------------------------------
     # Tabel
@@ -101,6 +150,9 @@ class BukuController:
     # ------------------------------------------------------------------
     def simpan_buku(self):
         """Tombol 'Simpan Data': tambah buku baru."""
+        if not self._izinkan_admin("menambah"):
+            return
+
         data_buku = self._baca_form()
         if data_buku is None:
             return
@@ -120,6 +172,9 @@ class BukuController:
 
     def perbarui_buku(self):
         """Tombol 'Perbarui Buku Terpilih': ubah buku pada baris yang dipilih."""
+        if not self._izinkan_admin("memperbarui"):
+            return
+
         baris = self.view.ambil_baris_terpilih()
         if baris is None:
             self.view.tampilkan_peringatan("Pilih buku", "Pilih buku dari tabel yang ingin diperbarui.")
@@ -146,6 +201,9 @@ class BukuController:
 
     def hapus_buku(self):
         """Tombol 'Hapus Buku Terpilih': hapus buku pada baris yang dipilih."""
+        if not self._izinkan_admin("menghapus"):
+            return
+
         baris = self.view.ambil_baris_terpilih()
         if baris is None:
             self.view.tampilkan_peringatan("Pilih buku", "Pilih buku dari tabel yang ingin dihapus.")
@@ -175,4 +233,5 @@ class BukuController:
 
 
 if __name__ == "__main__":
-    BukuController().run()
+    # Jalan pintas khusus uji coba tanpa login. Aplikasi sebenarnya dijalankan lewat main.py.
+    BukuController(user_role=ROLE_ADMIN).run()
